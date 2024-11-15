@@ -1,0 +1,9 @@
+---
+BasedOnStyle: Microsoft
+ColumnLimit: 200
+BinPackArguments: false
+BinPackParameters: false
+#PackConstructorInitializers: CurrentLine
+PointerAlignment: Left
+AlwaysBreakTemplateDeclarations: Yes
+IndentWidth: 4
