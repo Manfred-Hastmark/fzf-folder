@@ -9,3 +9,6 @@ add_executable(fzf-folder main.cpp)
 
 add_subdirectory(parser)
 target_link_libraries(fzf-folder PRIVATE fzf-folder::parser)
+
+add_subdirectory(finder)
+target_link_libraries(fzf-folder PRIVATE fzf-folder::finder)
