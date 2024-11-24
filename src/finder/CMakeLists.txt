@@ -6,3 +6,4 @@ target_sources(finder
         FILE_SET CXX_MODULES FILES 
             finder.cpp
 )
+target_link_libraries(finder PRIVATE fzf-folder::tui)

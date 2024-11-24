@@ -6,3 +6,5 @@ target_sources(parser
         FILE_SET CXX_MODULES FILES 
             parser.cpp
 )
+
+target_link_libraries(parser PRIVATE fzf-folder::tui)

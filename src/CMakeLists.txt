@@ -12,4 +12,7 @@ target_link_libraries(fzf-folder PRIVATE fzf-folder::parser)
 add_subdirectory(finder)
 target_link_libraries(fzf-folder PRIVATE fzf-folder::finder)
 
+add_subdirectory(tui)
+target_link_libraries(fzf-folder PRIVATE fzf-folder::tui)
+
 target_link_options(fzf-folder PRIVATE -lncurses)

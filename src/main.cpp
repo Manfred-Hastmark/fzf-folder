@@ -8,6 +8,7 @@
 
 import parser;
 import finder;
+import tui;
 
 namespace
 {
@@ -54,11 +55,11 @@ int main(int argc, char* argv[])
         (void)signal(sig, signal_handler);
     }
     init_curses();
-
-    finder::Finder finder(args.path);
+    tui::Tui tui;
+    finder::Finder finder(&tui, args.path);
     while (true)
     {
-        auto input = parser::get_input();
+        auto input = parser::get_input(tui);
         if (!input)
         {
             continue;
@@ -80,6 +81,5 @@ int main(int argc, char* argv[])
             }
             return 0;
         }
-        refresh();
     }
 }

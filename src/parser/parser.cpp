@@ -9,11 +9,16 @@ module;
 #include <vector>
 
 export module parser;
+import tui;
 
 namespace fs = std::filesystem;
 
 namespace
 {
+/**
+ * Parses cli parameter as flag
+ * @param arg string with flag
+ */
 [[nodiscard]] parser::Command get_command(char* /* arg */)
 {
     return parser::Command::UKNOWN;
@@ -57,13 +62,14 @@ export [[nodiscard]] Args get_args(int argc, char* argv[]) /// NOLINT
 
 /**
  * Retrieves user input
+ * @param tui terminal ui to get user input
  * @return char if the user gave a match,
  *         bool if the user escaped or entered,
  *         int if the user navigated up or down {-1, 1}
  */
-export [[nodiscard]] std::optional<std::variant<char, bool, int>> get_input() /// NOLINT
+export [[nodiscard]] std::optional<std::variant<char, bool, int>> get_input(const tui::Tui& tui) /// NOLINT
 {
-    auto input = getch();
+    auto input = tui.get_input();
 
     constexpr int ENTER = 10;
     if (input == ENTER)
