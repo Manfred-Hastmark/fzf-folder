@@ -1,6 +1,7 @@
 module;
 
 #include <cstdint>
+#include <cstdlib>
 #include <filesystem>
 #include <string>
 #include <utility>
@@ -16,14 +17,23 @@ export class Finder
     {
     }
 
-    void update_search(std::string search)
+    void update_search(char new_char)
     {
-        m_search = std::move(search);
+        m_search.push_back(new_char);
     }
 
-    void update_index(uint32_t index)
+    void update_index(int inc)
     {
-        m_index = index;
+        if (inc < 0 && m_index != 0)
+        {
+            m_index--;
+            return;
+        }
+        if (inc > 0 && m_index != UINT32_MAX)
+        {
+            m_index++;
+            return;
+        }
     }
 
     [[nodiscard]] std::string get_match() const
