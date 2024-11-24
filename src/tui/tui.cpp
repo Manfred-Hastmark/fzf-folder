@@ -1,6 +1,9 @@
 module;
 
+#include <cstddef>
 #include <curses.h>
+#include <mutex>
+#include <set>
 #include <string>
 
 export module tui;
@@ -28,11 +31,43 @@ export class Tui
      */
     void draw_input(const std::string& input)
     {
+        m_term_mutex.lock();
         wmove(m_winput_p, 0, 0);
         wprintw(m_winput_p, "> ");
         wprintw(m_winput_p, "%s", input.c_str());
         getyx(m_winput_p, m_winput_pos.y, m_winput_pos.x);
         wrefresh(m_winput_p);
+        m_term_mutex.unlock();
+    }
+
+    /**
+     * Draws the matching folders
+     * @param matches vector with all folder names
+     * @param total_folders total amount of folders in search dir
+     */
+    void draw_matches(const std::set<std::string>& matches, size_t total_folders)
+    {
+        m_term_mutex.lock();
+        int height = getmaxy(m_wresults_p);
+        wmove(m_wresults_p, 0, 0);
+        wclrtobot(m_wresults_p);
+        wmove(m_wresults_p, height - 1, 0);
+        wprintw(m_wresults_p, " %zu/%zu", matches.size(), total_folders);
+        height--;
+        wmove(m_wresults_p, height - 1, 0);
+        for (const auto& match : matches)
+        {
+            wprintw(m_wresults_p, "%s", match.c_str());
+            height--;
+            if (height == 0)
+            {
+                break;
+            }
+            wmove(m_wresults_p, height - 1, 0);
+        }
+        wrefresh(m_wresults_p);
+        wrefresh(m_winput_p);
+        m_term_mutex.unlock();
     }
 
     /**
@@ -56,5 +91,6 @@ export class Tui
     Pos m_winput_pos;
     WINDOW* m_winput_p;
     WINDOW* m_wresults_p;
+    std::mutex m_term_mutex;
 };
 } // namespace tui

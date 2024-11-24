@@ -1,13 +1,20 @@
 module;
 
+#include <barrier>
 #include <cstdint>
 #include <cstdlib>
 #include <filesystem>
+#include <set>
+#include <stop_token>
 #include <string>
+#include <thread>
 #include <utility>
+#include <vector>
 
 export module finder;
 import tui;
+
+namespace fs = std::filesystem;
 
 namespace finder
 {
@@ -22,9 +29,17 @@ export class Finder
      * @param root path to search from
      * @param search initial search string
      */
-    explicit Finder(tui::Tui* tui_p, std::filesystem::path root, std::string search = "") : m_tui_p(tui_p), m_root(std::move(root)), m_search(std::move(search))
+    explicit Finder(tui::Tui* tui_p, fs::path root, std::string search = "")
+        : m_tui_p(tui_p), m_root(std::move(root)), m_search(std::move(search)), m_search_thread([this](const std::stop_token& stop_token) { find_folders(stop_token); }), m_input_barrier(2)
     {
+        m_input_barrier.arrive_and_wait();
         m_tui_p->draw_input(m_search);
+    }
+
+    ~Finder()
+    {
+        m_search_thread.request_stop();
+        m_input_barrier.arrive_and_drop();
     }
 
     /**
@@ -34,6 +49,7 @@ export class Finder
     void update_search(char new_char)
     {
         m_search.push_back(new_char);
+        m_input_barrier.arrive_and_wait();
         m_tui_p->draw_input(m_search);
     }
 
@@ -65,11 +81,55 @@ export class Finder
     }
 
   private:
+    void find_folders(const std::stop_token& stop_token);
+
     tui::Tui* m_tui_p;
-    std::filesystem::path m_root;
+    fs::path m_root;
     std::string m_search;
     uint32_t m_index{0};
 
+    std::jthread m_search_thread;
+    std::barrier<> m_input_barrier;
+
     std::string m_match{"NOT FOUND"};
 };
+
+void Finder::find_folders(const std::stop_token& stop_token)
+{
+    auto folder_iter = fs::recursive_directory_iterator(m_root);
+    std::vector<fs::path> folders;
+    std::set<std::string> matches;
+    for (const auto& entry : folder_iter)
+    {
+        if (fs::status(entry.path()).type() == fs::file_type::directory)
+        {
+            folders.emplace_back(entry.path());
+            matches.insert(entry.path().string());
+        }
+    }
+
+    while (!stop_token.stop_requested())
+    {
+        m_input_barrier.arrive_and_wait();
+        if (stop_token.stop_requested())
+        {
+            return;
+        }
+        {
+            for (const auto& folder : folders)
+            {
+                if (folder.string().find(m_search) != std::string::npos)
+                {
+                    matches.insert(folder.string());
+                }
+                else
+                {
+                    matches.erase(folder.string());
+                }
+            }
+            m_tui_p->draw_matches(matches, folders.size());
+        }
+    }
+}
+
 } // namespace finder
