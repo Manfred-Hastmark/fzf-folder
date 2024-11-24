@@ -33,6 +33,7 @@ export class Tui
     {
         m_term_mutex.lock();
         wmove(m_winput_p, 0, 0);
+        wclrtoeol(m_winput_p);
         wprintw(m_winput_p, "> ");
         wprintw(m_winput_p, "%s", input.c_str());
         getyx(m_winput_p, m_winput_pos.y, m_winput_pos.x);

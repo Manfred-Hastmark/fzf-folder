@@ -32,7 +32,6 @@ export class Finder
     explicit Finder(tui::Tui* tui_p, fs::path root, std::string search = "")
         : m_tui_p(tui_p), m_root(std::move(root)), m_search(std::move(search)), m_search_thread([this](const std::stop_token& stop_token) { find_folders(stop_token); }), m_input_barrier(2)
     {
-        m_input_barrier.arrive_and_wait();
         m_tui_p->draw_input(m_search);
     }
 
@@ -48,7 +47,15 @@ export class Finder
      */
     void update_search(char new_char)
     {
-        m_search.push_back(new_char);
+        constexpr int DELETE = 127;
+        if (new_char == DELETE)
+        {
+            m_search.pop_back();
+        }
+        else
+        {
+            m_search.push_back(new_char);
+        }
         m_input_barrier.arrive_and_wait();
         m_tui_p->draw_input(m_search);
     }
@@ -97,16 +104,17 @@ export class Finder
 void Finder::find_folders(const std::stop_token& stop_token)
 {
     auto folder_iter = fs::recursive_directory_iterator(m_root);
-    std::vector<fs::path> folders;
+    std::set<fs::path> folders;
     std::set<std::string> matches;
     for (const auto& entry : folder_iter)
     {
         if (fs::status(entry.path()).type() == fs::file_type::directory)
         {
-            folders.emplace_back(entry.path());
+            folders.insert(entry.path());
             matches.insert(entry.path().string());
         }
     }
+    m_tui_p->draw_matches(matches, folders.size());
 
     while (!stop_token.stop_requested())
     {

@@ -99,7 +99,8 @@ export [[nodiscard]] std::optional<std::variant<char, bool, int>> get_input(cons
 
     constexpr int MIN_PRINTABLE_ASCII = 32;
     constexpr int MAX_PRINTABLE_ASCII = 126;
-    if (MIN_PRINTABLE_ASCII <= input && input <= MAX_PRINTABLE_ASCII)
+    constexpr int DELETE = 127;
+    if ((MIN_PRINTABLE_ASCII <= input && input <= MAX_PRINTABLE_ASCII) || input == DELETE)
     {
         return static_cast<char>(input);
     }
