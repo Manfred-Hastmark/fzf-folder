@@ -22,6 +22,7 @@ export class Tui
     {
         wrefresh(m_winput_p);
         wrefresh(m_wresults_p);
+        keypad(m_winput_p, TRUE);
     };
 
     /**

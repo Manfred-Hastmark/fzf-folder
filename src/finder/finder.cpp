@@ -1,15 +1,15 @@
 module;
 
 #include <barrier>
-#include <cstdint>
+#include <cstddef>
 #include <cstdlib>
+#include <curses.h>
 #include <filesystem>
 #include <set>
 #include <stop_token>
 #include <string>
 #include <thread>
 #include <utility>
-#include <vector>
 
 export module finder;
 import tui;
@@ -39,6 +39,7 @@ export class Finder
     {
         m_search_thread.request_stop();
         m_input_barrier.arrive_and_drop();
+        m_search_thread.join();
     }
 
     /**
@@ -47,8 +48,7 @@ export class Finder
      */
     void update_search(char new_char)
     {
-        constexpr int DELETE = 127;
-        if (new_char == DELETE)
+        if (new_char == 0 && !m_search.empty())
         {
             m_search.pop_back();
         }
@@ -69,20 +69,19 @@ export class Finder
         if (inc < 0 && m_index != 0)
         {
             m_index--;
-            return;
         }
-        if (inc > 0 && m_index != UINT32_MAX)
+        else if (inc > 0 && m_index != m_matches.size())
         {
             m_index++;
-            return;
         }
+        m_input_barrier.arrive_and_wait();
     }
 
     /**
      * Retrieves the searched element
      * @return std::string selected search match
      */
-    [[nodiscard]] std::string get_match() const
+    [[nodiscard]] const std::string& get_match() const
     {
         return m_match;
     }
@@ -93,51 +92,69 @@ export class Finder
     tui::Tui* m_tui_p;
     fs::path m_root;
     std::string m_search;
-    uint32_t m_index{0};
+    size_t m_index{0};
+    std::string m_match;
+    std::set<std::string> m_matches;
 
     std::jthread m_search_thread;
     std::barrier<> m_input_barrier;
-
-    std::string m_match{"NOT FOUND"};
 };
 
 void Finder::find_folders(const std::stop_token& stop_token)
 {
     auto folder_iter = fs::recursive_directory_iterator(m_root);
-    std::set<fs::path> folders;
-    std::set<std::string> matches;
+    std::set<std::string> non_matches;
     for (const auto& entry : folder_iter)
     {
         if (fs::status(entry.path()).type() == fs::file_type::directory)
         {
-            folders.insert(entry.path());
-            matches.insert(entry.path().string());
+            m_matches.insert(entry.path().string());
         }
     }
-    m_tui_p->draw_matches(matches, folders.size());
+    m_match = *m_matches.begin();
+    m_tui_p->draw_matches(m_matches, m_matches.size());
 
     while (!stop_token.stop_requested())
     {
         m_input_barrier.arrive_and_wait();
         if (stop_token.stop_requested())
         {
-            return;
+            break;
         }
         {
-            for (const auto& folder : folders)
+            for (auto iter = non_matches.begin(); iter != non_matches.end();)
             {
-                if (folder.string().find(m_search) != std::string::npos)
+                if (iter->find(m_search) != std::string::npos)
                 {
-                    matches.insert(folder.string());
+                    m_matches.insert(*iter);
+                    iter = non_matches.erase(iter);
                 }
                 else
                 {
-                    matches.erase(folder.string());
+                    iter++;
                 }
             }
-            m_tui_p->draw_matches(matches, folders.size());
+
+            size_t index{0};
+            for (auto iter = m_matches.begin(); iter != m_matches.end();)
+            {
+                if (iter->find(m_search) == std::string::npos)
+                {
+                    non_matches.insert(*iter);
+                    iter = m_matches.erase(iter);
+                }
+                else
+                {
+                    if (index == m_index)
+                    {
+                        m_match = *iter;
+                    }
+                    index++;
+                    iter++;
+                }
+            }
+            m_tui_p->draw_matches(m_matches, m_matches.size() + non_matches.size());
         }
     }
 }
-
 } // namespace finder

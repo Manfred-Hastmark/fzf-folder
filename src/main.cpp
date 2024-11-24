@@ -39,10 +39,9 @@ void signal_handler(int signum)
  */
 void init_curses()
 {
-    initscr();            // Create window
-    cbreak();             // Enable continous reading
-    noecho();             // Don't echo user input
-    keypad(stdscr, TRUE); // Enable keypad
+    initscr(); // Create window
+    cbreak();  // Enable continous reading
+    noecho();  // Don't echo user input
 }
 } // namespace
 
