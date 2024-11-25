@@ -47,25 +47,36 @@ export class Tui
      * @param matches vector with all folder names
      * @param total_folders total amount of folders in search dir
      */
-    void draw_matches(const std::set<std::string>& matches, size_t total_folders)
+    void draw_matches(size_t index, const std::set<std::string>& matches, size_t total_folders)
     {
         m_term_mutex.lock();
         int height = getmaxy(m_wresults_p);
         wmove(m_wresults_p, 0, 0);
-        wclrtobot(m_wresults_p);
+        werase(m_wresults_p);
         wmove(m_wresults_p, height - 1, 0);
         wprintw(m_wresults_p, " %zu/%zu", matches.size(), total_folders);
         height--;
         wmove(m_wresults_p, height - 1, 0);
+        size_t iter_index{0};
         for (const auto& match : matches)
         {
-            wprintw(m_wresults_p, "%s", match.c_str());
+            if (iter_index == index)
+            {
+                wattron(m_wresults_p, A_STANDOUT);
+                wprintw(m_wresults_p, "> %s", match.c_str());
+                wattroff(m_wresults_p, A_STANDOUT);
+            }
+            else
+            {
+                wprintw(m_wresults_p, "%s", match.c_str());
+            }
             height--;
             if (height == 0)
             {
                 break;
             }
             wmove(m_wresults_p, height - 1, 0);
+            iter_index++;
         }
         wrefresh(m_wresults_p);
         wrefresh(m_winput_p);

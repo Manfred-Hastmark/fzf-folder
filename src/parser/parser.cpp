@@ -63,7 +63,7 @@ export [[nodiscard]] Args get_args(int argc, char* argv[]) /// NOLINT
 /**
  * Retrieves user input
  * @param tui terminal ui to get user input
- * @return char if the user gave a match,
+ * @return char if the user gave a match, 0 if backspace
  *         bool if the user escaped or entered,
  *         int if the user navigated up or down {-1, 1}
  */

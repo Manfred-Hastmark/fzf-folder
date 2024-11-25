@@ -112,7 +112,7 @@ void Finder::find_folders(const std::stop_token& stop_token)
         }
     }
     m_match = *m_matches.begin();
-    m_tui_p->draw_matches(m_matches, m_matches.size());
+    m_tui_p->draw_matches(m_index, m_matches, m_matches.size());
 
     while (!stop_token.stop_requested())
     {
@@ -153,7 +153,11 @@ void Finder::find_folders(const std::stop_token& stop_token)
                     iter++;
                 }
             }
-            m_tui_p->draw_matches(m_matches, m_matches.size() + non_matches.size());
+            if (m_matches.size() <= m_index)
+            {
+                m_index = m_matches.size() - 1;
+            }
+            m_tui_p->draw_matches(m_index, m_matches, m_matches.size() + non_matches.size());
         }
     }
 }
