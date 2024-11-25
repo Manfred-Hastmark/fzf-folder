@@ -76,7 +76,7 @@ int main(int argc, char* argv[])
             endwin();
             if (*finish)
             {
-                std::cout << finder.get_match();
+                std::cout << finder.get_match() << "\n";
             }
             return 0;
         }
