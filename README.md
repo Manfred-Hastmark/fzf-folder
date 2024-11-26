@@ -5,7 +5,7 @@ Note that this tool is very much a work in progress and that you can most likely
 solve this problem with already existing tools. The main point of this project is to
 be a playground for testing tools/features related to C++ development.
 
-![preview](docs/preview.png)
+<img src="docs/preview.png" alt="preview" width="300"/>
 
 ## Building
 
@@ -37,7 +37,7 @@ Use either the arrow keys or TAB and shift+TAB to navigate up or down.
 Press ENTER to choose an option, the program will output the relative path.
 Press ESCAPE to abort, the program will output nothing.
 
-![preview](docs/preview.png)
+<img src="docs/preview.png" alt="preview" width="300"/>
 
 ## TODO
 
