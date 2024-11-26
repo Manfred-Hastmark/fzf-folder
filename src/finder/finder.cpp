@@ -108,7 +108,7 @@ void Finder::find_folders(const std::stop_token& stop_token)
     {
         if (fs::status(entry.path()).type() == fs::file_type::directory)
         {
-            m_matches.insert(entry.path().string());
+            m_matches.insert(fs::relative(entry.path(), m_root));
         }
     }
     m_match = *m_matches.begin();

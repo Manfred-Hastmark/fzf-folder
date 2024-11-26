@@ -1,9 +1,12 @@
 
 #include <array>
 #include <csignal>
+#include <cstdio>
 #include <cstdlib>
 #include <curses.h>
+#include <filesystem>
 #include <iostream>
+#include <termios.h>
 #include <variant>
 
 import parser;
@@ -12,6 +15,10 @@ import tui;
 
 namespace
 {
+
+FILE* tty = nullptr;
+termios orig_tty;
+
 /**
  * Exit signals to handle and cleanup resources on
  */
@@ -30,7 +37,10 @@ constexpr std::array EXIT_SIGNALS{
  */
 void signal_handler(int signum)
 {
+
     endwin();
+    tcsetattr(fileno(tty), 0, &orig_tty);
+    fclose(tty);
     exit(signum);
 }
 
@@ -39,9 +49,14 @@ void signal_handler(int signum)
  */
 void init_curses()
 {
+    tty = fopen("/dev/tty", "r+");
+    tcgetattr(fileno(tty), &orig_tty);
+
     initscr(); // Create window
     cbreak();  // Enable continous reading
     noecho();  // Don't echo user input
+    auto* screen = newterm(nullptr, tty, tty);
+    set_term(screen);
 }
 } // namespace
 
@@ -53,6 +68,7 @@ int main(int argc, char* argv[])
     {
         (void)signal(sig, signal_handler);
     }
+
     init_curses();
     tui::Tui tui;
     finder::Finder finder(&tui, args.path);
@@ -74,6 +90,8 @@ int main(int argc, char* argv[])
         else if (const auto* finish = std::get_if<bool>(&input.value()))
         {
             endwin();
+            tcsetattr(fileno(tty), 0, &orig_tty);
+            fclose(tty);
             if (*finish)
             {
                 std::cout << finder.get_match() << "\n";

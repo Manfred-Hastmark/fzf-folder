@@ -63,12 +63,12 @@ export class Tui
             if (iter_index == index)
             {
                 wattron(m_wresults_p, A_STANDOUT);
-                wprintw(m_wresults_p, "> %s", match.c_str());
+                wprintw(m_wresults_p, "  %s", match.c_str());
                 wattroff(m_wresults_p, A_STANDOUT);
             }
             else
             {
-                wprintw(m_wresults_p, "%s", match.c_str());
+                wprintw(m_wresults_p, " %s", match.c_str());
             }
             height--;
             if (height == 0)
