@@ -44,3 +44,4 @@ Press ESCAPE to abort, the program will output nothing.
 * Optimize initial find for folders, maybe detach this search to a separate thread or implement multithreaded search.
 * Create a better match algorithm, currently just checks that the search string is a subset of the path
 * Implement some flags such as fullpath or case-insensitive for example
+* Cleanup toolchain file and reorganize how toolchain and main cmake files are located in the project
