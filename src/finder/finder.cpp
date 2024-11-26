@@ -66,13 +66,27 @@ export class Finder
      */
     void update_index(int inc)
     {
-        if (inc < 0 && m_index != 0)
+        if (inc < 0)
         {
-            m_index--;
+            if (m_index != 0)
+            {
+                m_index--;
+            }
+            else
+            {
+                m_index = m_matches.size() - 1;
+            }
         }
-        else if (inc > 0 && m_index != m_matches.size())
+        else if (inc > 0)
         {
-            m_index++;
+            if (m_index < m_matches.size() - 1)
+            {
+                m_index++;
+            }
+            else
+            {
+                m_index = 0;
+            }
         }
         m_input_barrier.arrive_and_wait();
     }
