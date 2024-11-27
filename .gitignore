@@ -1,6 +1,7 @@
 out
 compile_commands.json
 .cache
+Testing
 
 # pixi environments
 .pixi

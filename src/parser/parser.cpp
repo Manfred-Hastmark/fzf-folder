@@ -67,7 +67,7 @@ export [[nodiscard]] Args get_args(int argc, char* argv[]) /// NOLINT
  *         bool if the user escaped or entered,
  *         int if the user navigated up or down {-1, 1}
  */
-export [[nodiscard]] std::optional<std::variant<char, bool, int>> get_input(const tui::Tui& tui) /// NOLINT
+export [[nodiscard]] std::optional<std::variant<char, bool, int>> get_input(const auto& tui) /// NOLINT
 {
     auto input = tui.get_input();
 

@@ -8,9 +8,9 @@ version = "0.1.0"
 
 [tasks]
 clean = 'rm -rf out'
-generate = 'cmake -S src -B out -G Ninja -DCMAKE_TOOLCHAIN_FILE=../TC-clang.cmake -DCMAKE_BUILD_TYPE=Debug'
+generate = 'cmake -S . -B out -G Ninja -DCMAKE_TOOLCHAIN_FILE=../TC-clang.cmake -DCMAKE_BUILD_TYPE=Debug'
 build = 'cmake --build out'
-release = 'cmake -S src -B out -G Ninja -DCMAKE_TOOLCHAIN_FILE=../TC-clang.cmake -DCMAKE_BUILD_TYPE=Release; cmake --build out'
+release = 'cmake -S . -B out -G Ninja -DCMAKE_TOOLCHAIN_FILE=../TC-clang.cmake -DCMAKE_BUILD_TYPE=Release; cmake --build out'
 
 [dependencies]
 cmake = ">=3.30.5,<4"

@@ -29,7 +29,7 @@ export class Finder
      * @param root path to search from
      * @param search initial search string
      */
-    explicit Finder(tui::Tui* tui_p, fs::path root, std::string search = "")
+    explicit Finder(auto* tui_p, fs::path root, std::string search = "")
         : m_tui_p(tui_p), m_root(std::move(root)), m_search(std::move(search)), m_search_thread([this](const std::stop_token& stop_token) { find_folders(stop_token); }), m_input_barrier(2)
     {
         m_tui_p->draw_input(m_search);
@@ -103,7 +103,7 @@ export class Finder
   private:
     void find_folders(const std::stop_token& stop_token);
 
-    tui::Tui* m_tui_p;
+    tui::Tui<>* m_tui_p;
     fs::path m_root;
     std::string m_search;
     size_t m_index{0};
