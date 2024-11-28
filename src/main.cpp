@@ -16,9 +16,6 @@ import tui;
 namespace
 {
 
-FILE* tty = nullptr;
-termios orig_tty;
-
 /**
  * Exit signals to handle and cleanup resources on
  */
@@ -32,45 +29,37 @@ constexpr std::array EXIT_SIGNALS{
 };
 
 /**
- * Handles unexpected program exits
- * and dismantles all resources
+ * Creates a curses Window with desired options
  */
-void signal_handler(int signum)
+void setup(FILE*& tty_p, termios& orig_tty)
 {
-
-    endwin();
-    tcsetattr(fileno(tty), 0, &orig_tty);
-    fclose(tty);
-    exit(signum);
+    tui::Tui<>::setup(tty_p, orig_tty);
 }
 
 /**
- * Creates a curses Window with desired options
+ * Handles unexpected program exits
+ * and dismantles all resources
  */
-void init_curses()
+void teardown(int signum, FILE*& tty_p, termios& orig_tty)
 {
-    tty = fopen("/dev/tty", "r+");
-    tcgetattr(fileno(tty), &orig_tty);
-
-    initscr(); // Create window
-    cbreak();  // Enable continous reading
-    noecho();  // Don't echo user input
-    auto* screen = newterm(nullptr, tty, tty);
-    set_term(screen);
+    tui::Tui<>::teardown(tty_p, orig_tty);
+    exit(signum);
 }
+
 } // namespace
 
 int main(int argc, char* argv[])
 {
-    auto args = parser::get_args(argc, argv);
-
+    static FILE* tty_p = nullptr;
+    static termios orig_tty;
     for (auto sig : EXIT_SIGNALS)
     {
-        (void)signal(sig, signal_handler);
+        (void)signal(sig, [](int signum) { teardown(signum, tty_p, orig_tty); });
     }
+    setup(tty_p, orig_tty);
 
-    init_curses();
     tui::Tui tui;
+    auto args = parser::get_args(argc, argv);
     finder::Finder finder(tui, args.path);
     while (true)
     {
@@ -89,9 +78,7 @@ int main(int argc, char* argv[])
         }
         else if (const auto* finish = std::get_if<bool>(&input.value()))
         {
-            endwin();
-            tcsetattr(fileno(tty), 0, &orig_tty);
-            fclose(tty);
+            tui::Tui<>::teardown(tty_p, orig_tty);
             if (*finish)
             {
                 std::cout << finder.get_match() << "\n";

@@ -5,6 +5,7 @@ module;
 #include <mutex>
 #include <set>
 #include <string>
+#include <termios.h>
 
 export module tui;
 
@@ -16,6 +17,10 @@ class Impl
 {
   public:
     Impl();
+
+    static void setup(FILE*& tty_p, termios& orig_tty);
+
+    static void teardown(FILE*& tty_p, termios& orig_tty);
 
     void draw_input(const std::string& input);
 
@@ -44,6 +49,22 @@ class Tui
 {
   public:
     Tui() = default;
+
+    /**
+     * Sets up tui and configs terminal
+     */
+    static void setup(FILE*& tty_p, termios& orig_tty)
+    {
+        IMPL::setup(tty_p, orig_tty);
+    }
+
+    /**
+     * Tears down tui and resets terminal
+     */
+    static void teardown(FILE*& tty_p, termios& orig_tty)
+    {
+        IMPL::teardown(tty_p, orig_tty);
+    }
 
     /**
      * Draws the user input
@@ -141,4 +162,23 @@ void Impl::draw_matches(size_t index, const std::set<std::string>& matches, size
     wrefresh(m_winput_p);
     return wgetch(m_winput_p);
 }
+
+void Impl::setup(FILE*& tty_p, termios& orig_tty_p)
+{
+    tty_p = fopen("/dev/tty", "r+");
+    tcgetattr(fileno(tty_p), &orig_tty_p);
+    initscr(); // Create window
+    cbreak();  // Enable continous reading
+    noecho();  // Don't echo user input
+    auto* screen = newterm(nullptr, tty_p, tty_p);
+    set_term(screen);
+}
+
+void Impl::teardown(FILE*& tty_p, termios& orig_tty)
+{
+    endwin();
+    tcsetattr(fileno(tty_p), 0, &orig_tty);
+    fclose(tty_p);
+}
+
 } // namespace tui
