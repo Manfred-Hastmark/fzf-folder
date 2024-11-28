@@ -71,7 +71,7 @@ int main(int argc, char* argv[])
 
     init_curses();
     tui::Tui tui;
-    finder::Finder finder(&tui, args.path);
+    finder::Finder finder(tui, args.path);
     while (true)
     {
         auto input = parser::get_input(tui);
@@ -81,7 +81,7 @@ int main(int argc, char* argv[])
         }
         if (const auto* match = std::get_if<char>(&input.value()))
         {
-            finder.update_search(*match);
+            finder.update_search(*match, tui);
         }
         else if (const auto* index = std::get_if<int>(&input.value()))
         {

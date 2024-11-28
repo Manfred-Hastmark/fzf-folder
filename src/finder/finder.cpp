@@ -29,10 +29,10 @@ export class Finder
      * @param root path to search from
      * @param search initial search string
      */
-    explicit Finder(auto* tui_p, fs::path root, std::string search = "")
-        : m_tui_p(tui_p), m_root(std::move(root)), m_search(std::move(search)), m_search_thread([this](const std::stop_token& stop_token) { find_folders(stop_token); }), m_input_barrier(2)
+    explicit Finder(auto& tui, fs::path root, std::string search = "")
+        : m_root(std::move(root)), m_search(std::move(search)), m_search_thread([&, this](const std::stop_token& stop_token) { find_folders(stop_token, tui); }), m_input_barrier(2)
     {
-        m_tui_p->draw_input(m_search);
+        tui.draw_input(m_search);
     }
 
     ~Finder()
@@ -46,7 +46,7 @@ export class Finder
      * Append character to search
      * @param new_char character to append
      */
-    void update_search(char new_char)
+    void update_search(char new_char, auto& tui)
     {
         if (new_char == 0 && !m_search.empty())
         {
@@ -57,7 +57,7 @@ export class Finder
             m_search.push_back(new_char);
         }
         m_input_barrier.arrive_and_wait();
-        m_tui_p->draw_input(m_search);
+        tui.draw_input(m_search);
     }
 
     /**
@@ -101,9 +101,8 @@ export class Finder
     }
 
   private:
-    void find_folders(const std::stop_token& stop_token);
+    void find_folders(const std::stop_token& stop_token, auto& tui);
 
-    tui::Tui<>* m_tui_p;
     fs::path m_root;
     std::string m_search;
     size_t m_index{0};
@@ -114,7 +113,7 @@ export class Finder
     std::barrier<> m_input_barrier;
 };
 
-void Finder::find_folders(const std::stop_token& stop_token)
+void Finder::find_folders(const std::stop_token& stop_token, auto& tui)
 {
     auto folder_iter = fs::recursive_directory_iterator(m_root);
     std::set<std::string> non_matches;
@@ -126,7 +125,7 @@ void Finder::find_folders(const std::stop_token& stop_token)
         }
     }
     m_match = *m_matches.begin();
-    m_tui_p->draw_matches(m_index, m_matches, m_matches.size());
+    tui.draw_matches(m_index, m_matches, m_matches.size());
 
     while (!stop_token.stop_requested())
     {
@@ -171,7 +170,7 @@ void Finder::find_folders(const std::stop_token& stop_token)
             {
                 m_index = m_matches.size() - 1;
             }
-            m_tui_p->draw_matches(m_index, m_matches, m_matches.size() + non_matches.size());
+            tui.draw_matches(m_index, m_matches, m_matches.size() + non_matches.size());
         }
     }
 }
