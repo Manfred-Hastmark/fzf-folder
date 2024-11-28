@@ -40,50 +40,60 @@ void setup(FILE*& tty_p, termios& orig_tty)
  * Handles unexpected program exits
  * and dismantles all resources
  */
-void teardown(int signum, FILE*& tty_p, termios& orig_tty)
+void teardown(FILE*& tty_p, termios& orig_tty)
 {
     tui::Tui<>::teardown(tty_p, orig_tty);
-    exit(signum);
 }
 
 } // namespace
 
-int main(int argc, char* argv[])
+int main(int argc, const char* argv[])
 {
     static FILE* tty_p = nullptr;
     static termios orig_tty;
     for (auto sig : EXIT_SIGNALS)
     {
-        (void)signal(sig, [](int signum) { teardown(signum, tty_p, orig_tty); });
+        (void)signal(sig, [](int signum) {
+            teardown(tty_p, orig_tty);
+            exit(signum);
+        });
     }
     setup(tty_p, orig_tty);
-
     tui::Tui tui;
-    auto args = parser::get_args(argc, argv);
-    finder::Finder finder(tui, args.path);
-    while (true)
+
+    try
     {
-        auto input = parser::get_input(tui);
-        if (!input)
+        auto args = parser::get_args(argc, argv);
+        finder::Finder finder(tui, args.path);
+        while (true)
         {
-            continue;
-        }
-        if (const auto* match = std::get_if<char>(&input.value()))
-        {
-            finder.update_search(*match, tui);
-        }
-        else if (const auto* index = std::get_if<int>(&input.value()))
-        {
-            finder.update_index(*index);
-        }
-        else if (const auto* finish = std::get_if<bool>(&input.value()))
-        {
-            tui::Tui<>::teardown(tty_p, orig_tty);
-            if (*finish)
+            auto input = parser::get_input(tui);
+            if (!input)
             {
-                std::cout << finder.get_match() << "\n";
+                continue;
             }
-            return 0;
+            if (const auto* match = std::get_if<char>(&input.value()))
+            {
+                finder.update_search(*match, tui);
+            }
+            else if (const auto* index = std::get_if<int>(&input.value()))
+            {
+                finder.update_index(*index);
+            }
+            else if (const auto* finish = std::get_if<bool>(&input.value()))
+            {
+                teardown(tty_p, orig_tty);
+                if (*finish)
+                {
+                    std::cout << finder.get_match() << "\n";
+                }
+                return 0;
+            }
         }
+    }
+    catch (parser::CmdExcept& cmd_except)
+    {
+        teardown(tty_p, orig_tty);
+        parser::print_except(cmd_except);
     }
 }

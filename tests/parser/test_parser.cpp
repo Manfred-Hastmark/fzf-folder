@@ -1,8 +1,10 @@
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
+#include <filesystem>
 #include <optional>
 #include <variant>
+#include <vector>
 
 import stubTui;
 import parser;
@@ -77,4 +79,39 @@ INSTANTIATE_TEST_SUITE_P(SweepGetInput,
                              InputIO{
                                  .input = 'h', // Some Letter
                                  .output = 'h',
+                             }));
+
+struct ArgsIO
+{
+    std::vector<const char*> args;
+    std::filesystem::path path;
+    std::vector<parser::Command> commands;
+};
+
+class TestGetArgs : public testing::TestWithParam<ArgsIO>
+{
+};
+
+TEST_P(TestGetArgs, testGetArgs)
+{
+    auto [args, path, commands] = GetParam();
+
+    auto out = parser::get_args(static_cast<int>(args.size()), args.data());
+
+    EXPECT_EQ(out.path, path);
+    EXPECT_EQ(out.commands, commands);
+}
+
+INSTANTIATE_TEST_SUITE_P(SweetGetArgs,
+                         TestGetArgs,
+                         testing::Values(
+                             ArgsIO{
+                                 .args{"fzf-folder", "."},
+                                 .path{std::filesystem::path(".")},
+                                 .commands{},
+                             },
+                             ArgsIO{
+                                 .args = {"fzf-folder"},
+                                 .path{std::filesystem::current_path()},
+                                 .commands{},
                              }));
