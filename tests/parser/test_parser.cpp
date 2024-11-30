@@ -12,12 +12,18 @@ import stubTui;
 import parser;
 import tui;
 
+/**
+ * Struct representing IO for get_input
+ */
 struct InputIO
 {
     int input{};
     std::optional<std::variant<char, bool, int>> output;
 };
 
+/**
+ * Testclass for testing get_input
+ */
 class TestParser : public testing::TestWithParam<InputIO>
 {
   private:
@@ -32,6 +38,9 @@ class TestParser : public testing::TestWithParam<InputIO>
     }
 };
 
+/**
+ * Parameterized test checking IO of get_input for different keys
+ */
 TEST_P(TestParser, testGetInput)
 {
     auto [input, output] = GetParam();
@@ -43,6 +52,9 @@ TEST_P(TestParser, testGetInput)
     EXPECT_EQ(parser::get_input(tui), output);
 }
 
+/**
+ * Inputed key and expected output value for get_input
+ */
 INSTANTIATE_TEST_SUITE_P(SweepGetInput,
                          TestParser,
                          testing::Values(
@@ -83,6 +95,9 @@ INSTANTIATE_TEST_SUITE_P(SweepGetInput,
                                  .output = 'h',
                              }));
 
+/**
+ * Struct representing IO for get_args
+ */
 struct ArgsIO
 {
     std::vector<const char*> args;
@@ -90,6 +105,9 @@ struct ArgsIO
     std::vector<parser::Command> commands;
 };
 
+/**
+ * Test structure for get_args
+ */
 class TestGetArgs : public testing::TestWithParam<ArgsIO>
 {
   public:
@@ -134,6 +152,9 @@ class TestGetArgs : public testing::TestWithParam<ArgsIO>
     }
 };
 
+/**
+ * Parameterized test for get_args
+ */
 TEST_P(TestGetArgs, testGetArgs)
 {
     auto [args, path, commands] = GetParam();
@@ -183,6 +204,9 @@ TEST_P(TestGetArgs, testGetArgs)
     }
 }
 
+/**
+ * Test cases for get_args, with given input and expected output
+ */
 INSTANTIATE_TEST_SUITE_P(SweetGetArgs,
                          TestGetArgs,
                          testing::Values(
