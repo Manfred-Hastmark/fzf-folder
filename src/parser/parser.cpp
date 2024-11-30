@@ -25,6 +25,7 @@ export enum class Command : uint8_t
 {
     UKNOWN,
     ICASE, // Case insensitive (-i)
+    FPATH, // Print full path (-f)
     PATH,  // Arg is a path
     HELP,  // Help (-h)
 };
@@ -45,6 +46,10 @@ namespace
     if (std::string("-i") == arg)
     {
         return parser::Command::ICASE;
+    }
+    if (std::string("-f") == arg)
+    {
+        return parser::Command::FPATH;
     }
     if (std::string("-h") == arg)
     {

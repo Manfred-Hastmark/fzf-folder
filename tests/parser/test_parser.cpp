@@ -2,7 +2,9 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include <filesystem>
+#include <map>
 #include <optional>
+#include <string>
 #include <variant>
 #include <vector>
 
@@ -90,16 +92,95 @@ struct ArgsIO
 
 class TestGetArgs : public testing::TestWithParam<ArgsIO>
 {
+  public:
+    static std::string argsToString(const std::vector<const char*>& args)
+    {
+        std::string args_string("[");
+        if (!args.empty())
+        {
+            for (auto iter = args.begin(); iter != args.end() - 1; iter++)
+            {
+                args_string.append(*iter);
+                args_string.append(", ");
+            }
+            args_string.append(args.back());
+        }
+        args_string.append("]");
+        return args_string;
+    }
+
+    static std::string commandsToString(const std::vector<parser::Command>& cmds)
+    {
+        static std::map<parser::Command, std::string> cmd_to_string{
+            {parser::Command::UKNOWN, "Command::UNKOWN"},
+            {parser::Command::HELP, "Command::HELP"},
+            {parser::Command::PATH, "Command::PATH"},
+            {parser::Command::ICASE, "Command::ICASE"},
+            {parser::Command::FPATH, "Command::FPATH"},
+        };
+
+        std::string cmds_string("[");
+        if (!cmds.empty())
+        {
+            for (auto iter = cmds.begin(); iter != cmds.end() - 1; iter++)
+            {
+                cmds_string.append(cmd_to_string.at(*iter));
+                cmds_string.append(", ");
+            }
+            cmds_string.append(cmd_to_string.at(cmds.back()));
+        }
+        cmds_string.append("]");
+        return cmds_string;
+    }
 };
 
 TEST_P(TestGetArgs, testGetArgs)
 {
     auto [args, path, commands] = GetParam();
 
-    auto out = parser::get_args(static_cast<int>(args.size()), args.data());
-
-    EXPECT_EQ(out.path, path);
-    EXPECT_EQ(out.commands, commands);
+    try
+    {
+        auto out = parser::get_args(static_cast<int>(args.size()), args.data());
+        EXPECT_EQ(out.path, path) << "Expected path does not math parsed path\n"
+                                     "Expected path: "
+                                  << path
+                                  << "\n"
+                                     "Parsed path: "
+                                  << out.path;
+        EXPECT_EQ(out.commands, commands) << "Expected commands don't match parsed commands\n"
+                                             "Expected commands: "
+                                          << commandsToString(commands)
+                                          << "\n"
+                                             "Parsed commands: "
+                                          << commandsToString(out.commands)
+                                          << "\n"
+                                             "Provided args: "
+                                          << argsToString(args);
+    }
+    catch (parser::CmdExcept& except)
+    {
+        bool help{false};
+        for (const auto* arg : args)
+        {
+            help |= std::string(arg).find("-h") != std::string::npos;
+        }
+        if (help)
+        {
+            EXPECT_EQ(except.type(), parser::Command::HELP) << "Flag -h was provided\n"
+                                                               "Expected exception type: Command::HELP";
+        }
+        else
+        {
+            EXPECT_EQ(except.type(), parser::Command::UKNOWN) << "Got exception and -h flag was not present\n"
+                                                                 "Expected exception type: Command::UNKOWN";
+        }
+        EXPECT_EQ(path, std::filesystem::path("")) << "Received command except, no path parsed\n"
+                                                      "But expected: "
+                                                   << path;
+        EXPECT_EQ(commands.empty(), true) << "Received command except, no commands parsed\n"
+                                             "But expected: "
+                                          << commandsToString(commands);
+    }
 }
 
 INSTANTIATE_TEST_SUITE_P(SweetGetArgs,
@@ -111,7 +192,17 @@ INSTANTIATE_TEST_SUITE_P(SweetGetArgs,
                                  .commands{},
                              },
                              ArgsIO{
-                                 .args = {"fzf-folder"},
+                                 .args = {"fzf-folder", "-i", "-f"},
                                  .path{std::filesystem::current_path()},
+                                 .commands{parser::Command::ICASE, parser::Command::FPATH},
+                             },
+                             ArgsIO{
+                                 .args = {"fzf-folder", "-h"},
+                                 .path{},
+                                 .commands{},
+                             },
+                             ArgsIO{
+                                 .args = {"fzf-folder", "random-unkown-command"},
+                                 .path{},
                                  .commands{},
                              }));
