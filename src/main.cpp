@@ -64,7 +64,7 @@ int main(int argc, const char* argv[])
     try
     {
         auto args = parser::get_args(argc, argv);
-        finder::Finder finder(tui, args.path);
+        finder::Finder finder(tui, args.path, args.commands);
         while (true)
         {
             auto input = parser::get_input(tui);

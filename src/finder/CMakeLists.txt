@@ -7,3 +7,4 @@ target_sources(finder
             finder.cpp
 )
 target_link_libraries(finder PRIVATE fzf-folder::tui)
+target_link_libraries(finder PRIVATE fzf-folder::parser)

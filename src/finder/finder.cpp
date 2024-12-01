@@ -1,5 +1,6 @@
 module;
 
+#include <algorithm>
 #include <barrier>
 #include <cstddef>
 #include <cstdlib>
@@ -10,9 +11,11 @@ module;
 #include <string>
 #include <thread>
 #include <utility>
+#include <vector>
 
 export module finder;
 import tui;
+import parser;
 
 namespace fs = std::filesystem;
 
@@ -29,8 +32,8 @@ export class Finder
      * @param root path to search from
      * @param search initial search string
      */
-    explicit Finder(auto& tui, fs::path root, std::string search = "")
-        : m_root(std::move(root)), m_search(std::move(search)), m_search_thread([&, this](const std::stop_token& stop_token) { find_folders(stop_token, tui); }), m_input_barrier(2)
+    explicit Finder(auto& tui, fs::path root, const std::vector<parser::Command>& cmds, std::string search = "")
+        : m_root(std::move(root)), m_cmds(cmds), m_search(std::move(search)), m_search_thread([&, this](const std::stop_token& stop_token) { find_folders(stop_token, tui); }), m_input_barrier(2)
     {
         tui.draw_input(m_search);
     }
@@ -95,8 +98,12 @@ export class Finder
      * Retrieves the searched element
      * @return std::string selected search match
      */
-    [[nodiscard]] const std::string& get_match() const
+    [[nodiscard]] std::string get_match() const
     {
+        if (std::ranges::find(m_cmds, parser::Command::FPATH) != m_cmds.end())
+        {
+            return m_root.string() + "/" + m_match;
+        }
         return m_match;
     }
 
@@ -104,6 +111,7 @@ export class Finder
     void find_folders(const std::stop_token& stop_token, auto& tui);
 
     fs::path m_root;
+    const std::vector<parser::Command> m_cmds;
     std::string m_search;
     size_t m_index{0};
     std::string m_match;
